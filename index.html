@@ -48,10 +48,35 @@
       margin-bottom: 20px;
     }
 
+    .header-spacer { flex: 1; }
+
     h1 {
       margin: 0;
       font-size: 28px;
       letter-spacing: -0.02em;
+    }
+
+    .field-label {
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
     }
 
     .pill {
@@ -278,6 +303,58 @@
     .summary-item h4 { margin: 0 0 6px; }
     .muted { color: var(--muted); }
 
+    .ai-feedback {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .ai-feedback h4 {
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+
+    .pill.primary-pill {
+      background: linear-gradient(120deg, #a855f7, #22d3ee);
+      color: #0b1120;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-body { color: var(--text); line-height: 1.5; }
+
+    .loading-dots {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .loading-dots span {
+      height: 8px;
+      width: 8px;
+      background: linear-gradient(120deg, #a855f7, #22d3ee);
+      border-radius: 50%;
+      animation: pulse 1s infinite ease-in-out;
+    }
+
+    .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.85); opacity: 0.6; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
     .empty-state {
       text-align: center;
       padding: 24px;
@@ -285,6 +362,78 @@
       border: 1px dashed rgba(255,255,255,0.2);
       color: var(--muted);
     }
+
+    .settings-button {
+      margin-left: auto;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      z-index: 10;
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.45);
+      padding: 18px;
+      color: var(--text);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .modal h3 { margin: 0; letter-spacing: -0.01em; }
+
+    .close-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      border-radius: 10px;
+      height: 36px;
+      width: 36px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    .settings-row { margin: 14px 0; display: grid; gap: 8px; }
+
+    .radio-group { display: grid; gap: 10px; }
+    .radio-tile {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      padding: 12px;
+      border-radius: 12px;
+      display: grid;
+      gap: 6px;
+      cursor: pointer;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .radio-tile input { display: none; }
+
+    .radio-tile strong { display: block; }
+
+    .radio-tile input:checked + div {
+      border: 1px solid var(--accent);
+      background: rgba(168,85,247,0.12);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -292,6 +441,8 @@
     <header>
       <h1>Quizzer</h1>
       <span class="pill">Upload CSV · Pick a mode · Quiz away</span>
+      <div class="header-spacer"></div>
+      <button class="secondary settings-button" id="openSettings" type="button">Settings</button>
     </header>
 
     <div class="layout">
@@ -328,17 +479,129 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="settingsModal" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-header">
+        <h3 id="settingsTitle">Settings</h3>
+        <button class="close-btn" id="closeSettings" aria-label="Close settings">×</button>
+      </div>
+      <div class="settings-row">
+        <label class="field-label" for="apiKey">OpenAI API key (optional)</label>
+        <input type="password" class="text-input" id="apiKey" placeholder="sk-..." autocomplete="off" />
+        <div class="hint">Stored only in this browser and used to generate AI explanations when answers are incorrect.</div>
+      </div>
+      <div class="settings-row">
+        <div class="field-label">AI response style</div>
+        <div class="radio-group" id="aiStyles"></div>
+        <div class="hint">Choose how the AI explains mistakes after incorrect answers.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" type="button" id="closeSettingsFooter">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const fileInput = document.getElementById('fileInput');
     const quizArea = document.getElementById('quizArea');
     const questionCount = document.getElementById('questionCount');
     const startBtn = document.getElementById('startBtn');
     const modeRadios = document.querySelectorAll('input[name="mode"]');
+    const apiKeyInput = document.getElementById('apiKey');
+    const openSettingsBtn = document.getElementById('openSettings');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettingsBtn = document.getElementById('closeSettings');
+    const closeSettingsFooter = document.getElementById('closeSettingsFooter');
+    const aiStylesContainer = document.getElementById('aiStyles');
 
     let questions = [];
     let responses = [];
     let currentIndex = 0;
     let statusState = { message: '', type: 'info' };
+    let aiExplanations = [];
+    let openAIKey = localStorage.getItem('quizzer-openai-key') || '';
+    let aiResponseStyle = localStorage.getItem('quizzer-ai-response-style') || 'concise-bullets';
+
+    const aiResponseOptions = {
+      'concise-bullets': {
+        title: 'Crisp bullet tutor',
+        description: 'Clear, direct, 3-5 bullet points focused on the misconception and the right idea.',
+        system: 'You are a concise tutor who explains quiz mistakes in 3-5 punchy bullet points focused on why the chosen answer is wrong and why the correct answer is right. Keep bullets short and actionable.',
+        userInstruction: 'Use bullet points. Lead with the main misconception, then clarify the correct idea.'
+      },
+      'encouraging-coach': {
+        title: 'Encouraging coach',
+        description: 'Conversational, upbeat, and supportive while teaching the right reasoning.',
+        system: 'You are an encouraging, conversational teacher who mixes warmth with guidance. Use a friendly tone, acknowledge effort, and give clear teaching moments.',
+        userInstruction: 'Reply in 2-3 short paragraphs. Start with a quick encouragement, then kindly correct the mistake and give a memorable tip.'
+      },
+      'tough-love-instructor': {
+        title: 'Tough-love instructor',
+        description: 'Blunt but informative. Directly call out the mistake and teach the fix.',
+        system: 'You are a firm instructor with tough-love energy. You call out mistakes directly but always provide precise teaching so the learner improves.',
+        userInstruction: 'Answer in 4-6 sentences. Be frank about what was wrong, then clearly walk through the correct reasoning.'
+      }
+    };
+
+    apiKeyInput.value = openAIKey;
+
+    apiKeyInput.addEventListener('input', (event) => {
+      openAIKey = event.target.value.trim();
+      if (openAIKey) {
+        localStorage.setItem('quizzer-openai-key', openAIKey);
+      } else {
+        localStorage.removeItem('quizzer-openai-key');
+      }
+    });
+
+    function renderAiStyles() {
+      aiStylesContainer.innerHTML = Object.entries(aiResponseOptions).map(([value, option]) => {
+        const checked = value === aiResponseStyle ? 'checked' : '';
+        return `
+          <label class="radio-tile">
+            <input type="radio" name="aiStyle" value="${value}" ${checked} />
+            <div>
+              <strong>${option.title}</strong>
+              <span class="muted">${option.description}</span>
+            </div>
+          </label>
+        `;
+      }).join('');
+
+      aiStylesContainer.querySelectorAll('input[name="aiStyle"]').forEach(input => {
+        input.addEventListener('change', (event) => {
+          aiResponseStyle = event.target.value;
+          localStorage.setItem('quizzer-ai-response-style', aiResponseStyle);
+        });
+      });
+    }
+
+    function openSettings() {
+      settingsModal.hidden = false;
+      settingsModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSettings() {
+      settingsModal.hidden = true;
+      settingsModal.setAttribute('aria-hidden', 'true');
+    }
+
+    openSettingsBtn.addEventListener('click', () => {
+      renderAiStyles();
+      openSettings();
+    });
+
+    closeSettingsBtn.addEventListener('click', closeSettings);
+    closeSettingsFooter.addEventListener('click', closeSettings);
+    settingsModal.addEventListener('click', (event) => {
+      if (event.target === settingsModal) closeSettings();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && settingsModal.getAttribute('aria-hidden') === 'false') {
+        closeSettings();
+      }
+    });
 
     const sampleCSV = `question,option_a,option_b,option_c,option_d,correct\nWhat does HTML stand for?,Hyper Trainer Marking Language,Hyper Text Markup Language,Hyper Text Marketing Language,Hyper Text Markup Leveler,B\nWhich method converts JSON to JavaScript object?,JSON.parse(),JSON.stringify(),JSON.toJS(),JSON.convert(),A\nHow many bits make up an IPv6 address?,32 bits,64 bits,128 bits,256 bits,C\nWhich CSS property changes text color?,font-style,text-decoration,color,text-shadow,C`;
 
@@ -381,6 +644,7 @@
 
     function resetQuiz() {
       responses = questions.map(() => ({ selected: null, checked: false }));
+      aiExplanations = questions.map(() => ({ status: 'idle', message: '' }));
       currentIndex = 0;
       statusState = { message: '', type: 'info' };
     }
@@ -402,6 +666,7 @@
       const response = responses[currentIndex];
       const mode = getMode();
       const progress = ((currentIndex) / questions.length) * 100;
+      const aiSection = renderAiFeedback(currentIndex);
 
       quizArea.innerHTML = `
         <div class="progress" aria-hidden="true"><div style="width:${progress}%"></div></div>
@@ -428,6 +693,7 @@
           ${mode === 'instant' ? '<button class="secondary" id="checkBtn">Check answer</button>' : ''}
         </div>
         <div class="status" id="statusArea"></div>
+        ${aiSection}
       `;
 
       quizArea.querySelectorAll('.option').forEach(btn => {
@@ -436,6 +702,7 @@
           responses[currentIndex].selected = idx;
           if (mode === 'instant') {
             responses[currentIndex].checked = false;
+            aiExplanations[currentIndex] = { status: 'idle', message: '' };
           }
           setStatus('');
           renderQuestion();
@@ -472,10 +739,103 @@
           responses[currentIndex].checked = true;
           const correct = response.selected === q.answerIndex;
           setStatus(correct ? 'Correct! Nice work.' : `Not quite. The correct answer is ${String.fromCharCode(65 + q.answerIndex)}.`, correct ? 'success' : 'error');
+          if (!correct) {
+            fetchAiExplanation(currentIndex);
+          } else {
+            aiExplanations[currentIndex] = { status: 'idle', message: '' };
+          }
           renderQuestion();
         };
       }
       setStatus(statusState.message, statusState.type);
+    }
+
+    function renderAiFeedback(index) {
+      const mode = getMode();
+      const response = responses[index];
+      if (mode !== 'instant' || !response?.checked) return '';
+
+      const q = questions[index];
+      if (!q || response.selected === q.answerIndex) return '';
+
+      const entry = aiExplanations[index] || { status: 'idle', message: '' };
+      if (!openAIKey && entry.status === 'idle') {
+        return `<div class="ai-feedback"><h4>Why was this incorrect?</h4><div class="hint">Add your OpenAI API key to generate a personalized explanation.</div></div>`;
+      }
+
+      if (entry.status === 'loading') {
+        return `<div class="ai-feedback"><h4>Generating explanation</h4><div class="loading-dots" aria-live="polite"><span></span><span></span><span></span></div></div>`;
+      }
+
+      if (entry.status === 'error') {
+        return `<div class="ai-feedback"><h4>Explanation unavailable</h4><div class="hint">${entry.message}</div></div>`;
+      }
+
+      if (entry.status === 'ready') {
+        return `<div class="ai-feedback"><h4><span class="pill primary-pill">AI feedback</span> Explanation</h4><div class="ai-body">${entry.message}</div></div>`;
+      }
+
+      return '';
+    }
+
+    async function fetchAiExplanation(index) {
+      const entry = aiExplanations[index];
+      const response = responses[index];
+      if (!response || response.selected === null) return;
+      if (entry && (entry.status === 'loading' || entry.status === 'ready')) return;
+
+      if (!openAIKey) {
+        aiExplanations[index] = { status: 'idle', message: '' };
+        renderQuestion();
+        return;
+      }
+
+      aiExplanations[index] = { status: 'loading', message: '' };
+      renderQuestion();
+
+      const q = questions[index];
+      const userAnswer = q.options[response.selected];
+      const correctAnswer = q.options[q.answerIndex];
+
+      const style = aiResponseOptions[aiResponseStyle] || aiResponseOptions['concise-bullets'];
+
+      const messages = [
+        { role: 'system', content: style.system },
+        { role: 'user', content: `Question: ${q.question}\nIncorrect answer: ${userAnswer}\nCorrect answer: ${correctAnswer}\nExplain why the chosen answer is wrong and why the correct answer is right. ${style.userInstruction}` }
+      ];
+
+      try {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openAIKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages,
+            temperature: 0.5,
+            max_tokens: 250
+          })
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(`OpenAI request failed (${res.status}). ${errorText}`);
+        }
+
+        const data = await res.json();
+        const content = data?.choices?.[0]?.message?.content?.trim() || 'No explanation returned.';
+        const safeContent = content
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br>');
+        aiExplanations[index] = { status: 'ready', message: safeContent };
+      } catch (error) {
+        aiExplanations[index] = { status: 'error', message: error.message || 'Unable to fetch explanation.' };
+      }
+
+      renderQuestion();
     }
 
     function setStatus(message, type = 'info') {

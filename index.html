@@ -297,7 +297,7 @@
     <div class="layout">
       <section class="panel" aria-label="Quiz controls">
         <h2>Setup</h2>
-        <p class="muted">Upload a CSV with columns: <strong>question</strong>, <strong>option1..option4</strong>, and <strong>answer</strong> (letter or text). Data stays in your browser.</p>
+        <p class="muted">Upload a CSV with columns: <strong>question</strong>, <strong>option1..option4</strong> (or <strong>option_a..option_d</strong>), and <strong>answer/correct</strong> (letter or text). Data stays in your browser.</p>
         <div class="upload-box">
           <input type="file" id="fileInput" accept=".csv" />
           <p class="muted" style="margin:8px 0 0">Drop or choose a CSV to replace questions.</p>
@@ -317,6 +317,7 @@
 
         <div style="margin-top:16px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
           <button class="primary" id="startBtn">Start quiz</button>
+          <button class="secondary" id="sampleBtn" type="button">Use sample quiz</button>
           <span class="badge" id="questionCount">0 questions loaded</span>
         </div>
       </section>
@@ -339,7 +340,7 @@
     let currentIndex = 0;
     let statusState = { message: '', type: 'info' };
 
-    const sampleCSV = `question,option1,option2,option3,option4,answer\nWhat does HTML stand for?,Hyper Trainer Marking Language,Hyper Text Markup Language,Hyper Text Marketing Language,Hyper Text Markup Leveler,B\nWhich method converts JSON to JavaScript object?,JSON.parse(),JSON.stringify(),JSON.toJS(),JSON.convert(),A\nHow many bits make up an IPv6 address?,32 bits,64 bits,128 bits,256 bits,C\nWhich CSS property changes text color?,font-style,text-decoration,color,text-shadow,C`;
+    const sampleCSV = `question,option_a,option_b,option_c,option_d,correct\nWhat does HTML stand for?,Hyper Trainer Marking Language,Hyper Text Markup Language,Hyper Text Marketing Language,Hyper Text Markup Leveler,B\nWhich method converts JSON to JavaScript object?,JSON.parse(),JSON.stringify(),JSON.toJS(),JSON.convert(),A\nHow many bits make up an IPv6 address?,32 bits,64 bits,128 bits,256 bits,C\nWhich CSS property changes text color?,font-style,text-decoration,color,text-shadow,C`;
 
     function parseCSV(text) {
       const lines = text.trim().split(/\r?\n/);
@@ -354,7 +355,7 @@
         headers.forEach((h, idx) => record[h] = cols[idx] ?? '');
         const optionKeys = Object.keys(record).filter(k => k.startsWith('option'));
         const options = optionKeys.map(k => record[k]).filter(Boolean);
-        const answerRaw = record['answer'] || '';
+        const answerRaw = record['answer'] || record['correct'] || record['correct_answer'] || '';
         const answerIndex = parseAnswer(answerRaw, options);
         if (!record.question || options.length === 0 || answerIndex === -1) continue;
         data.push({ question: record.question, options, answerIndex });
@@ -546,18 +547,25 @@
           return;
         }
         setQuestions(parsed);
-        setStatus('');
+        setStatus('Questions loaded! Press start when you are ready.', 'success');
         renderQuestion();
       });
     });
 
     startBtn.addEventListener('click', () => {
       if (!questions.length) {
-        setQuestions(parseCSV(sampleCSV));
-      } else {
-        resetQuiz();
+        setStatus('Add a CSV or load the sample quiz first.', 'warning');
+        renderEmptyState('Upload a CSV to begin.');
+        return;
       }
+      resetQuiz();
       setStatus('');
+      renderQuestion();
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', () => {
+      setQuestions(parseCSV(sampleCSV));
+      setStatus('Sample quiz loaded. Press start when you are ready.', 'info');
       renderQuestion();
     });
 
@@ -567,8 +575,7 @@
       renderQuestion();
     }));
 
-    setQuestions(parseCSV(sampleCSV));
-    renderEmptyState('Ready when you are. Use the sample quiz or upload your own.');
+    renderEmptyState('Upload a CSV to begin or use the sample quiz.');
   </script>
 </body>
 </html>

@@ -56,6 +56,12 @@
       letter-spacing: -0.02em;
     }
 
+    .settings-row {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0;
+    }
+
     .field-label {
       font-weight: 700;
       display: inline-flex;
@@ -473,6 +479,12 @@
           <button class="secondary" id="sampleBtn" type="button">Use sample quiz</button>
           <span class="badge" id="questionCount">0 questions loaded</span>
         </div>
+
+        <div class="settings-row">
+          <label class="field-label" for="apiKey">OpenAI API key (optional)</label>
+          <input type="password" class="text-input" id="apiKey" placeholder="sk-..." autocomplete="off" />
+          <div class="hint">Used locally to generate explanations when you miss a question. Stored only in this browser.</div>
+        </div>
       </section>
 
       <section class="card" aria-live="polite">
@@ -510,11 +522,6 @@
     const startBtn = document.getElementById('startBtn');
     const modeRadios = document.querySelectorAll('input[name="mode"]');
     const apiKeyInput = document.getElementById('apiKey');
-    const openSettingsBtn = document.getElementById('openSettings');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettingsBtn = document.getElementById('closeSettings');
-    const closeSettingsFooter = document.getElementById('closeSettingsFooter');
-    const aiStylesContainer = document.getElementById('aiStyles');
 
     let questions = [];
     let responses = [];
@@ -522,28 +529,6 @@
     let statusState = { message: '', type: 'info' };
     let aiExplanations = [];
     let openAIKey = localStorage.getItem('quizzer-openai-key') || '';
-    let aiResponseStyle = localStorage.getItem('quizzer-ai-response-style') || 'concise-bullets';
-
-    const aiResponseOptions = {
-      'concise-bullets': {
-        title: 'Crisp bullet tutor',
-        description: 'Clear, direct, 3-5 bullet points focused on the misconception and the right idea.',
-        system: 'You are a concise tutor who explains quiz mistakes in 3-5 punchy bullet points focused on why the chosen answer is wrong and why the correct answer is right. Keep bullets short and actionable.',
-        userInstruction: 'Use bullet points. Lead with the main misconception, then clarify the correct idea.'
-      },
-      'encouraging-coach': {
-        title: 'Encouraging coach',
-        description: 'Conversational, upbeat, and supportive while teaching the right reasoning.',
-        system: 'You are an encouraging, conversational teacher who mixes warmth with guidance. Use a friendly tone, acknowledge effort, and give clear teaching moments.',
-        userInstruction: 'Reply in 2-3 short paragraphs. Start with a quick encouragement, then kindly correct the mistake and give a memorable tip.'
-      },
-      'tough-love-instructor': {
-        title: 'Tough-love instructor',
-        description: 'Blunt but informative. Directly call out the mistake and teach the fix.',
-        system: 'You are a firm instructor with tough-love energy. You call out mistakes directly but always provide precise teaching so the learner improves.',
-        userInstruction: 'Answer in 4-6 sentences. Be frank about what was wrong, then clearly walk through the correct reasoning.'
-      }
-    };
 
     apiKeyInput.value = openAIKey;
 
@@ -553,62 +538,6 @@
         localStorage.setItem('quizzer-openai-key', openAIKey);
       } else {
         localStorage.removeItem('quizzer-openai-key');
-      }
-    });
-
-    function renderAiStyles() {
-      aiStylesContainer.innerHTML = Object.entries(aiResponseOptions).map(([value, option]) => {
-        const checked = value === aiResponseStyle ? 'checked' : '';
-        return `
-          <label class="radio-tile">
-            <input type="radio" name="aiStyle" value="${value}" ${checked} />
-            <div>
-              <strong>${option.title}</strong>
-              <span class="muted">${option.description}</span>
-            </div>
-          </label>
-        `;
-      }).join('');
-
-      aiStylesContainer.querySelectorAll('input[name="aiStyle"]').forEach(input => {
-        input.addEventListener('change', (event) => {
-          aiResponseStyle = event.target.value;
-          localStorage.setItem('quizzer-ai-response-style', aiResponseStyle);
-        });
-      });
-    }
-
-    function openSettings() {
-      settingsModal.hidden = false;
-      settingsModal.setAttribute('aria-hidden', 'false');
-      const modal = settingsModal.querySelector('.modal');
-      if (modal) modal.focus();
-      if (apiKeyInput) {
-        requestAnimationFrame(() => apiKeyInput.focus());
-      }
-    }
-
-    function closeSettings() {
-      settingsModal.hidden = true;
-      settingsModal.setAttribute('aria-hidden', 'true');
-    }
-
-    openSettingsBtn.addEventListener('click', () => {
-      renderAiStyles();
-      openSettings();
-    });
-
-    renderAiStyles();
-
-    closeSettingsBtn.addEventListener('click', closeSettings);
-    closeSettingsFooter.addEventListener('click', closeSettings);
-    settingsModal.addEventListener('click', (event) => {
-      if (event.target === settingsModal) closeSettings();
-    });
-
-    document.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape' && settingsModal.getAttribute('aria-hidden') === 'false') {
-        closeSettings();
       }
     });
 
@@ -806,11 +735,9 @@
       const userAnswer = q.options[response.selected];
       const correctAnswer = q.options[q.answerIndex];
 
-      const style = aiResponseOptions[aiResponseStyle] || aiResponseOptions['concise-bullets'];
-
       const messages = [
-        { role: 'system', content: style.system },
-        { role: 'user', content: `Question: ${q.question}\nIncorrect answer: ${userAnswer}\nCorrect answer: ${correctAnswer}\nExplain why the chosen answer is wrong and why the correct answer is right. ${style.userInstruction}` }
+        { role: 'system', content: 'You are a concise tutor who explains quiz mistakes in 3-5 bullet points.' },
+        { role: 'user', content: `Question: ${q.question}\nIncorrect answer: ${userAnswer}\nCorrect answer: ${correctAnswer}\nExplain why the chosen answer is wrong and why the correct answer is right. Use short bullet points.` }
       ];
 
       try {

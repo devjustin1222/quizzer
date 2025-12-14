@@ -48,6 +48,8 @@
       margin-bottom: 20px;
     }
 
+    .header-spacer { flex: 1; }
+
     h1 {
       margin: 0;
       font-size: 28px;
@@ -366,6 +368,80 @@
       border: 1px dashed rgba(255,255,255,0.2);
       color: var(--muted);
     }
+
+    .settings-button {
+      margin-left: auto;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      z-index: 10;
+    }
+
+    [hidden] { display: none !important; }
+
+    .modal {
+      width: min(520px, 100%);
+      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.45);
+      padding: 18px;
+      color: var(--text);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .modal h3 { margin: 0; letter-spacing: -0.01em; }
+
+    .close-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+      border-radius: 10px;
+      height: 36px;
+      width: 36px;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+
+    .settings-row { margin: 14px 0; display: grid; gap: 8px; }
+
+    .radio-group { display: grid; gap: 10px; }
+    .radio-tile {
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      padding: 12px;
+      border-radius: 12px;
+      display: grid;
+      gap: 6px;
+      cursor: pointer;
+      transition: border-color 120ms ease, background 120ms ease;
+    }
+
+    .radio-tile input { display: none; }
+
+    .radio-tile strong { display: block; }
+
+    .radio-tile input:checked + div {
+      border: 1px solid var(--accent);
+      background: rgba(168,85,247,0.12);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-footer { display: flex; justify-content: flex-end; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -373,6 +449,8 @@
     <header>
       <h1>Quizzer</h1>
       <span class="pill">Upload CSV · Pick a mode · Quiz away</span>
+      <div class="header-spacer"></div>
+      <button class="secondary settings-button" id="openSettings" type="button">Settings</button>
     </header>
 
     <div class="layout">
@@ -412,6 +490,28 @@
       <section class="card" aria-live="polite">
         <div id="quizArea"></div>
       </section>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="settingsModal" hidden aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" tabindex="-1">
+      <div class="modal-header">
+        <h3 id="settingsTitle">Settings</h3>
+        <button class="close-btn" id="closeSettings" aria-label="Close settings">×</button>
+      </div>
+      <div class="settings-row">
+        <label class="field-label" for="apiKey">OpenAI API key (optional)</label>
+        <input type="password" class="text-input" id="apiKey" placeholder="sk-..." autocomplete="off" />
+        <div class="hint">Stored only in this browser and used to generate AI explanations when answers are incorrect.</div>
+      </div>
+      <div class="settings-row">
+        <div class="field-label">AI response style</div>
+        <div class="radio-group" id="aiStyles"></div>
+        <div class="hint">Choose how the AI explains mistakes after incorrect answers.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary" type="button" id="closeSettingsFooter">Close</button>
+      </div>
     </div>
   </div>
 
